@@ -1,0 +1,1 @@
+"# strahd-camp-manager" 
