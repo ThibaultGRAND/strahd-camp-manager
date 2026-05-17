@@ -1,0 +1,14 @@
+{
+  "STRAHD_CAMP": {
+    "Title": "Sanctuaire d'Austrade",
+    "Points": "Points disponibles",
+    "Build": "Construire",
+    "Clear": "Déboiser",
+    "Demolish": "Démolir",
+    "Upkeep": "Upkeep mensuel",
+    "Session": "Session",
+    "Resident": "Résident",
+    "Event": "Événement",
+    "Journal": "Journal MJ"
+  }
+}

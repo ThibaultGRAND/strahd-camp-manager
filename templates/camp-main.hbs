@@ -1,0 +1,312 @@
+{{!-- camp-main.hbs — Interface principale du gestionnaire de camp --}}
+<div class="camp-root">
+
+  {{!-- ══════════════ HEADER ══════════════ --}}
+  <div class="camp-header">
+    <div class="camp-header__left">
+      <div class="camp-header__title">⛺ Sanctuaire d'Austrade</div>
+      <div class="camp-header__sub">Forêt de Svalich · Barovia</div>
+    </div>
+    <div class="camp-header__metrics">
+      <div class="camp-metric camp-metric--pts" style="color:{{pointsColor}}">
+        <span class="camp-metric__val">{{state.points}}</span>
+        <span class="camp-metric__lbl">pts disponibles</span>
+      </div>
+      <div class="camp-metric">
+        <span class="camp-metric__val">{{state.pointsTotal}}</span>
+        <span class="camp-metric__lbl">pts totaux</span>
+      </div>
+      <div class="camp-metric camp-metric--warn">
+        <span class="camp-metric__val">−{{upkeep}}</span>
+        <span class="camp-metric__lbl">upkeep/mois</span>
+      </div>
+      {{#if barrierActive}}
+      <div class="camp-metric camp-metric--green">
+        <span class="camp-metric__val">✨</span>
+        <span class="camp-metric__lbl">Barrière active</span>
+      </div>
+      {{else}}
+      <div class="camp-metric camp-metric--danger">
+        <span class="camp-metric__val">⚠️</span>
+        <span class="camp-metric__lbl">Barrière tombée!</span>
+      </div>
+      {{/if}}
+    </div>
+    {{#if isGM}}
+    <div class="camp-header__actions">
+      <button id="btn-add-points" class="camp-btn camp-btn--sm">+ Points</button>
+      <button id="btn-upkeep" class="camp-btn camp-btn--sm camp-btn--warn">Upkeep</button>
+    </div>
+    {{/if}}
+  </div>
+
+  {{!-- AXES --}}
+  <div class="camp-axes">
+    {{#each axes}}
+    <div class="camp-axis {{#if warn}}camp-axis--warn{{/if}}">
+      <span class="camp-axis__icon">{{icon}}</span>
+      <span class="camp-axis__label">{{label}}</span>
+      <div class="camp-axis__bar">
+        <div class="camp-axis__fill" style="width:{{pct}}%;background:{{color}}"></div>
+      </div>
+      <span class="camp-axis__val">{{val}}/{{max}}</span>
+    </div>
+    {{/each}}
+  </div>
+
+  {{!-- MALUS --}}
+  {{#if malus.length}}
+  <div class="camp-malus-bar">
+    {{#each malus}}
+    <div class="camp-malus-chip" style="border-color:{{color}};color:{{color}}">
+      ⚠ {{label}} — {{text}}
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  {{!-- TABS --}}
+  <div class="camp-tabs">
+    <button class="camp-tab-btn {{#if (eq activeTab 'map')}}camp-tab-btn--active{{/if}}" data-tab="map">🗺️ Carte du camp</button>
+    <button class="camp-tab-btn {{#if (eq activeTab 'build')}}camp-tab-btn--active{{/if}}" data-tab="build">🏗️ Constructions</button>
+    <button class="camp-tab-btn {{#if (eq activeTab 'sessions')}}camp-tab-btn--active{{/if}}" data-tab="sessions">📅 Sessions</button>
+    <button class="camp-tab-btn {{#if (eq activeTab 'residents')}}camp-tab-btn--active{{/if}}" data-tab="residents">👥 Résidents</button>
+    <button class="camp-tab-btn {{#if (eq activeTab 'events')}}camp-tab-btn--active{{/if}}" data-tab="events">📰 Événements</button>
+    {{#if isGM}}
+    <button class="camp-tab-btn {{#if (eq activeTab 'log')}}camp-tab-btn--active{{/if}}" data-tab="log">🔐 Journal MJ</button>
+    {{/if}}
+  </div>
+
+  <div class="camp-body">
+
+    {{!-- ══════════════ TAB : CARTE ══════════════ --}}
+    {{#if (eq activeTab 'map')}}
+    <div class="camp-map-panel">
+      {{#if isGM}}
+      <div class="camp-map-legend">
+        <span class="legend-item legend-item--forest">🌲 Clic = Déboiser</span>
+        <span class="legend-item legend-item--empty">🟢 Clic = Construire</span>
+        <span class="legend-item legend-item--built">🏠 Clic = Infos · Clic droit = Démolir</span>
+      </div>
+      {{else}}
+      <div class="camp-map-legend">
+        <span class="legend-item">Cliquez sur une zone pour voir les détails.</span>
+      </div>
+      {{/if}}
+
+      <div class="camp-map-wrap">
+        <img class="camp-map-img" src="modules/strahd-camp-manager/assets/map-camp.jpg" alt="Carte du camp">
+        <svg class="camp-map-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+          {{#each zones}}
+            {{#if (eq type 'forest')}}
+              {{#if cleared}}
+                {{!-- Forêt déboisée, vide --}}
+                <g class="camp-zone camp-zone--empty" data-zone-id="{{id}}" transform="translate({{x}},{{y}})">
+                  <circle r="{{#if (eq size 'large')}}5{{else if (eq size 'medium')}}4{{else}}3{{/if}}" fill="rgba(45,106,79,0.35)" stroke="#2D6A4F" stroke-width="0.4"/>
+                  <text y="1.2" text-anchor="middle" font-size="3.5">🟢</text>
+                  <title>{{label}} — Zone disponible. Cliquez pour construire.</title>
+                </g>
+              {{else}}
+                {{!-- Forêt dense --}}
+                <g class="camp-zone camp-zone--forest" data-zone-id="{{id}}" transform="translate({{x}},{{y}})">
+                  <circle r="{{#if (eq size 'large')}}5.5{{else if (eq size 'medium')}}4{{else}}3{{/if}}" fill="rgba(34,85,34,0.45)" stroke="#1a5c1a" stroke-width="0.5" stroke-dasharray="1,0.5"/>
+                  <text y="1.5" text-anchor="middle" font-size="4.5">🌲</text>
+                  <title>{{label}} — Forêt dense. Coût déboisage : {{clearCost}} pts.</title>
+                </g>
+              {{/if}}
+            {{else if (eq type 'water')}}
+              <g class="camp-zone camp-zone--water" data-zone-id="{{id}}" transform="translate({{x}},{{y}})">
+                <circle r="3" fill="rgba(30,100,180,0.25)" stroke="#1e64b4" stroke-width="0.3"/>
+                <text y="1" text-anchor="middle" font-size="3">💧</text>
+                <title>{{label}} — Eau (non constructible)</title>
+              </g>
+            {{else}}
+              {{#if building}}
+                {{!-- Bâtiment construit --}}
+                <g class="camp-zone camp-zone--built" data-zone-id="{{id}}" transform="translate({{x}},{{y}})">
+                  <circle r="{{#if (eq size 'large')}}5.5{{else if (eq size 'medium')}}4.5{{else}}3.5{{/if}}" fill="rgba(74,55,40,0.7)" stroke="#c8a96e" stroke-width="0.6"/>
+                  <text y="2" text-anchor="middle" font-size="5">{{building.icon}}</text>
+                  <text y="5.5" text-anchor="middle" font-size="1.6" fill="#f5e6c8">{{building.name}}</text>
+                  <title>{{building.name}} — {{building.desc}}</title>
+                </g>
+              {{else}}
+                {{!-- Zone dégagée constructible --}}
+                <g class="camp-zone camp-zone--empty" data-zone-id="{{id}}" transform="translate({{x}},{{y}})">
+                  <circle r="{{#if (eq size 'large')}}5{{else if (eq size 'medium')}}4{{else}}3{{/if}}" fill="rgba(45,106,79,0.35)" stroke="#2D6A4F" stroke-width="0.4"/>
+                  <text y="1.2" text-anchor="middle" font-size="3.5">🟢</text>
+                  <title>{{label}} — Zone disponible. Cliquez pour construire.</title>
+                </g>
+              {{/if}}
+            {{/if}}
+          {{/each}}
+        </svg>
+      </div>
+    </div>
+    {{/if}}
+
+    {{!-- ══════════════ TAB : CONSTRUCTIONS ══════════════ --}}
+    {{#if (eq activeTab 'build')}}
+    <div class="camp-build-panel">
+      {{#each buildingsByTier}}
+      {{#if this.length}}
+      <div class="build-tier-section">
+        <div class="build-tier-title">━━ Tier {{@key}} ━━</div>
+        <div class="build-tier-grid">
+          {{#each this}}
+          <div class="build-card-full {{#if built}}bcard--built{{else if available}}bcard--avail{{else}}bcard--locked{{/if}}">
+            <div class="bcard__header" style="background:{{color}}22;border-bottom:2px solid {{color}}">
+              <span class="bcard__icon">{{icon}}</span>
+              <span class="bcard__name">{{name}}</span>
+              {{#if built}}<span class="bcard__badge bcard__badge--built">✓</span>{{/if}}
+              {{#if available}}<span class="bcard__badge bcard__badge--avail">{{cost}} pts</span>{{/if}}
+              {{#if locked}}<span class="bcard__badge bcard__badge--locked">🔒</span>{{/if}}
+            </div>
+            <div class="bcard__body">
+              <p class="bcard__desc">{{desc}}</p>
+              <p class="bcard__flavor">{{flavor}}</p>
+              <div class="bcard__bonuses">
+                {{#each bonuses}}<div class="bcard__bonus">→ {{this}}</div>{{/each}}
+              </div>
+              {{#if locked}}
+              <div class="bcard__reqs">Requiert : {{#each missingReqs}}<span class="req-chip">{{this}}</span>{{/each}}</div>
+              {{/if}}
+              <div class="bcard__footer">
+                <span class="bcard__axe">{{axe}} +{{axeVal}}</span>
+                {{#if upkeep}}<span class="bcard__upkeep">−{{upkeep}} pt/mois</span>{{/if}}
+                <span class="bcard__status">{{statusLabel}}</span>
+              </div>
+            </div>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+      {{/each}}
+    </div>
+    {{/if}}
+
+    {{!-- ══════════════ TAB : SESSIONS ══════════════ --}}
+    {{#if (eq activeTab 'sessions')}}
+    <div class="camp-sessions-panel">
+      <div class="sessions-list">
+        {{#each sessions}}
+        <div class="session-row">
+          <div class="session-num">{{num}}</div>
+          <div class="session-info">
+            <div class="session-title">{{title}}</div>
+            {{#if date}}<div class="session-date">{{date}}</div>{{/if}}
+          </div>
+          <div class="session-pts">+{{pts}} pts</div>
+          <div class="session-cumul">= {{cumul}} pts</div>
+        </div>
+        {{/each}}
+      </div>
+
+      {{#if isGM}}
+      <div class="sessions-add">
+        <div class="sessions-add__title">Ajouter une session</div>
+        <div class="sessions-add__form">
+          <input id="sess-title" type="text" placeholder="Titre de la session..." class="camp-input">
+          <input id="sess-pts" type="number" placeholder="Points" class="camp-input camp-input--sm" min="0">
+          <button id="btn-add-session" class="camp-btn">Enregistrer</button>
+        </div>
+        <div class="sessions-add__scale">
+          <div class="scale-title">Barème de points</div>
+          <div class="scale-row"><span class="scale-pts green">+2–4</span><span>Session jouée (base)</span></div>
+          <div class="scale-row"><span class="scale-pts green">+2</span><span>Objectif principal accompli</span></div>
+          <div class="scale-row"><span class="scale-pts green">+1</span><span>Objectif secondaire / Roleplay</span></div>
+          <div class="scale-row"><span class="scale-pts green">+2</span><span>Boss vaincu / Révélation majeure</span></div>
+          <div class="scale-row"><span class="scale-pts red">−1</span><span>PJ mort (temporaire)</span></div>
+          <div class="scale-row"><span class="scale-pts red">−3</span><span>PJ mort définitivement</span></div>
+        </div>
+      </div>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- ══════════════ TAB : RÉSIDENTS ══════════════ --}}
+    {{#if (eq activeTab 'residents')}}
+    <div class="camp-residents-panel">
+      {{#each residents}}
+      <div class="resident-card resident-card--{{status}}">
+        <div class="resident-avatar">{{#if (eq id 'enry')}}🐉{{else if (eq id 'nejo')}}🧭{{else}}👥{{/if}}</div>
+        <div class="resident-info">
+          <div class="resident-name">{{name}}</div>
+          <div class="resident-role">{{role}}</div>
+          <div class="resident-bonus">→ {{bonus}}</div>
+        </div>
+        <div class="resident-cost">
+          {{#if upkeep}}−{{upkeep}} pt/mois{{else}}Gratuit{{/if}}
+        </div>
+        <div class="resident-status resident-status--{{status}}">{{status}}</div>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+
+    {{!-- ══════════════ TAB : ÉVÉNEMENTS ══════════════ --}}
+    {{#if (eq activeTab 'events')}}
+    <div class="camp-events-panel">
+      {{#if isGM}}
+      <div class="events-actions">
+        <button id="btn-add-event" class="camp-btn">+ Nouvel événement</button>
+      </div>
+      {{/if}}
+      <div class="events-list">
+        {{#each events}}
+        <div class="event-card event-card--{{category}}">
+          <div class="event-cat-bar" style="background:{{catColor category}}"></div>
+          <div class="event-body">
+            <div class="event-header">
+              <span class="event-title">{{title}}</span>
+              <span class="event-cat-label" style="color:{{catColor category}}">{{catLabel category}}</span>
+              {{#if pts}}<span class="event-pts">+{{pts}} pts</span>{{/if}}
+              {{#if @root.isGM}}
+              <button class="event-toggle camp-btn camp-btn--xs" data-idx="{{@index}}">
+                {{#if visible}}👁️ Masquer{{else}}👁️ Afficher{{/if}}
+              </button>
+              {{/if}}
+            </div>
+            <p class="event-text">{{text}}</p>
+            <div class="event-footer">Session {{session}}</div>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+    </div>
+    {{/if}}
+
+    {{!-- ══════════════ TAB : JOURNAL MJ ══════════════ --}}
+    {{#if (eq activeTab 'log')}}
+    {{#if isGM}}
+    <div class="camp-log-panel">
+      <div class="log-secret">
+        <div class="log-secret__title">🔐 Secrets actifs</div>
+        <div class="log-secret__item log-secret__item--purple">
+          <strong>Enry devient humain</strong> — La transformation kobold → humain est en cours suite au sort de soin de Gustave. Révélation prévue dans 2-3 sessions. Les joueurs ignorent.
+        </div>
+        <div class="log-secret__item log-secret__item--red">
+          <strong>Traître dans le camp</strong> — Enry a averti Denna et Cohortys. Si le traître brise le sceau, la barrière tombe. Identité à révéler.
+        </div>
+        <div class="log-secret__item log-secret__item--gold">
+          <strong>Barrière d'Austrade</strong> — Tant que Magie > 0, Strahd ne peut pas localiser le camp. Si Magie = 0 → alerte automatique.
+        </div>
+      </div>
+
+      <div class="log-transactions">
+        <div class="log-transactions__title">Historique des points</div>
+        {{#each transactions}}
+        <div class="trans-row">
+          <span class="trans-date">{{date}}</span>
+          <span class="trans-label">{{label}}</span>
+          <span class="trans-amount {{#if (gt amount 0)}}green{{else}}red{{/if}}">{{sign amount}}</span>
+          <span class="trans-balance">= {{balance}} pts</span>
+        </div>
+        {{/each}}
+      </div>
+    </div>
+    {{/if}}
+    {{/if}}
+
+  </div>{{!-- /camp-body --}}
+</div>{{!-- /camp-root --}}

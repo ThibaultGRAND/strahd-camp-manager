@@ -1,0 +1,21 @@
+{
+  "id": "strahd-camp-manager",
+  "title": "Strahd — Gestionnaire de Camp",
+  "description": "Système de gestion de camp interactif façon Clash of Clans pour Curse of Strahd. Carte interactive, construction de bâtiments, déboisage, points de camp.",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "12",
+    "verified": "13",
+    "maximum": "13"
+  },
+  "authors": [{ "name": "MJ Strahd" }],
+  "scripts": [
+    "scripts/campData.js",
+    "scripts/campZones.js",
+    "scripts/campApp.js",
+    "scripts/camp.js"
+  ],
+  "styles": ["styles/camp.css"],
+  "languages": [{ "lang": "fr", "name": "Français", "path": "lang/fr.json" }],
+  "flags": {}
+}
