@@ -3,6 +3,8 @@
   "title": "Strahd — Gestionnaire de Camp",
   "description": "Système de gestion de camp interactif façon Clash of Clans pour Curse of Strahd. Carte interactive, construction de bâtiments, déboisage, points de camp.",
   "version": "1.0.0",
+  "manifest": "https://raw.githubusercontent.com/ThibaultGRAND/strahd-camp-manager/master/module.json",
+  "download": "https://github.com/ThibaultGRAND/strahd-camp-manager/archive/refs/heads/master.zip",
   "compatibility": {
     "minimum": "12",
     "verified": "13",
@@ -16,6 +18,5 @@
     "scripts/camp.js"
   ],
   "styles": ["styles/camp.css"],
-  "languages": [{ "lang": "fr", "name": "Français", "path": "lang/fr.json" }],
-  "flags": {}
+  "languages": [{ "lang": "fr", "name": "Français", "path": "lang/fr.json" }]
 }
